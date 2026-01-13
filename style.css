@@ -75,6 +75,16 @@ body {
     animation: fadeOut 0.3s ease-out forwards;
 }
 
+/* Animation for History Items */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
 /* Dashed line for walkway */
 .dashed-line {
     background: linear-gradient(to bottom, #334155 50%, transparent 50%);
