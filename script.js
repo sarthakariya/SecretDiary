@@ -1,80 +1,64 @@
 /**
- * Secret Diary Classroom - v3.5 (Button Actions & Interactive States)
+ * Secret Diary Classroom - v4.0 (Neo-Glass Design)
  */
 
-const STORAGE_KEY = 'classroom_diary_state_v6';
+const STORAGE_KEY = 'classroom_diary_state_v7';
 
 // State
 const initialState = {
-    diaryLocation: null, // 1-16 or null
-    heldBy: 'You',       // 'You', 'Anonymous', or null
+    diaryLocation: null, 
+    heldBy: 'You',       
     history: [],
-    lastKnownLocation: null // Tracks where diary was before Anonymous took it
+    lastKnownLocation: null 
 };
 
 let appState = JSON.parse(localStorage.getItem(STORAGE_KEY)) || initialState;
 if (appState.diaryLocation === undefined) appState = initialState;
 
-// Audio Engine (Synthesizer)
+// Audio Engine
 const SoundEngine = {
     ctx: null,
-    
     init: function() {
         if (!this.ctx) {
             this.ctx = new (window.AudioContext || window.webkitAudioContext)();
         }
     },
-
     playTone: function(freq, type, duration, vol = 0.1) {
         if (!this.ctx) this.init();
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
-        
         osc.type = type;
         osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-        
         gain.gain.setValueAtTime(vol, this.ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
-
         osc.connect(gain);
         gain.connect(this.ctx.destination);
-        
         osc.start();
         osc.stop(this.ctx.currentTime + duration);
     },
-
     playSuccess: function() { 
-        // Placing sound
         this.playTone(600, 'sine', 0.1); 
-        setTimeout(() => this.playTone(800, 'sine', 0.2), 100);
+        setTimeout(() => this.playTone(900, 'sine', 0.3), 100);
     },
-    
     playTake: function() {
-        // Retrieving sound
         this.playTone(400, 'triangle', 0.1); 
-        setTimeout(() => this.playTone(500, 'triangle', 0.1), 80);
-        setTimeout(() => this.playTone(600, 'triangle', 0.2), 160);
+        setTimeout(() => this.playTone(600, 'triangle', 0.2), 100);
     },
-
     playClick: function() {
-        // Click Empty
-        this.playTone(800, 'square', 0.05, 0.03);
+        this.playTone(800, 'square', 0.03, 0.02);
     },
-
     playAlert: function() {
-        // Error/Stolen
         this.playTone(150, 'sawtooth', 0.3, 0.1);
-        setTimeout(() => this.playTone(100, 'sawtooth', 0.3, 0.1), 150);
+        setTimeout(() => this.playTone(120, 'sawtooth', 0.3, 0.1), 150);
     },
-
     playMagic: function() {
-        [400, 500, 600, 800].forEach((f, i) => {
-            setTimeout(() => this.playTone(f, 'sine', 0.2, 0.05), i * 50);
+        [500, 600, 700, 800, 1000].forEach((f, i) => {
+            setTimeout(() => this.playTone(f, 'sine', 0.15, 0.05), i * 60);
         });
     }
 };
 
-// DOM Elements
+// DOM
 const rowLeft = document.getElementById('row-left');
 const rowRight = document.getElementById('row-right');
 const historyLog = document.getElementById('history-log');
@@ -104,7 +88,6 @@ function init() {
     simulateBtn.onclick = handleSimulateActivity;
     takeBtn.onclick = handleTakeButton;
     
-    // Init audio on first interaction
     document.body.addEventListener('click', () => SoundEngine.init(), { once: true });
 }
 
@@ -120,103 +103,86 @@ function renderClassroom() {
         const targetContainer = isLeftRow ? rowLeft : rowRight;
         const hasDiary = appState.diaryLocation === i;
         
-        // Locking Logic
-        // If Anonymous has it, the 'lastKnownLocation' (vacated bench) is locked
-        let isLocked = false;
-        if (appState.heldBy === 'Anonymous' && appState.lastKnownLocation === i) {
-            isLocked = true;
-        }
+        let isLocked = (appState.heldBy === 'Anonymous' && appState.lastKnownLocation === i);
 
-        // Interactive Logic
-        // Hover effect if: (User Holds & Bench Empty) OR (User Empty & Bench Has Diary)
-        // AND not locked.
         let isInteractive = false;
         if (!isLocked) {
-             if (appState.heldBy === 'You') {
-                 // I hold it, I can place it anywhere
-                 isInteractive = true;
-             } else if (appState.heldBy === null && hasDiary) {
-                 // Hands empty, diary is here -> Interactive
-                 isInteractive = true;
-             }
+             if (appState.heldBy === 'You') isInteractive = true;
+             else if (appState.heldBy === null && hasDiary) isInteractive = true;
         }
         
         const benchEl = document.createElement('div');
         
         // Base Classes
-        let className = `bench w-28 h-16 md:w-36 md:h-20 relative cursor-pointer select-none group`;
+        let className = `bench w-full aspect-[4/3] relative cursor-pointer select-none group`;
         if (isLocked) className += ' locked-bench vacated-anim';
         if (isInteractive) className += ' interactive';
 
         benchEl.className = className;
         benchEl.onclick = (e) => handleBenchClick(i, e, benchEl);
 
-        // Visual Content
-        const diaryContent = hasDiary 
-            ? `<div class="absolute inset-0 z-20 flex items-center justify-center diary-icon-anim">
-                 <div class="bg-indigo-600 text-white rounded shadow-lg p-2 border-2 border-white">
+        const diaryVisual = hasDiary 
+            ? `<div class="absolute inset-0 z-20 flex items-center justify-center diary-icon-anim pointer-events-none">
+                 <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-md shadow-lg p-2.5 border border-white/20 transform rotate-[-5deg]">
                     <i class="fa-solid fa-book-journal-whills text-xl"></i>
                  </div>
                </div>`
             : '';
 
-        const deskContent = `
-            <div class="bench-surface w-full h-full rounded-lg relative overflow-hidden flex items-center justify-center">
-                <span class="absolute top-1 left-2 text-[10px] font-bold text-white/50 shadow-sm">#${i.toString().padStart(2, '0')}</span>
-                ${diaryContent}
+        // Modern Bench Structure
+        benchEl.innerHTML = `
+            <div class="bench-surface w-full h-full rounded-lg relative flex items-center justify-center">
+                <span class="absolute top-2 left-3 text-[10px] font-bold text-slate-400 font-space tracking-widest z-10 opacity-60">
+                    #${i.toString().padStart(2, '0')}
+                </span>
+                ${diaryVisual}
             </div>
-            <!-- Legs (Visual) -->
-            <div class="absolute -bottom-1 left-3 w-1.5 h-3 bg-slate-600 rounded-full"></div>
-            <div class="absolute -bottom-1 right-3 w-1.5 h-3 bg-slate-600 rounded-full"></div>
         `;
 
-        benchEl.innerHTML = deskContent;
         targetContainer.appendChild(benchEl);
     }
 }
 
 function renderInventory() {
-    // Button State
+    // Button Logic
     const canTake = appState.diaryLocation !== null && appState.heldBy === null;
     takeBtn.disabled = !canTake;
-    takeBtn.className = canTake 
-        ? "w-full py-3 rounded-xl font-bold text-white shadow-md transition-all transform active:scale-95 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 border-b-4 border-indigo-800"
-        : "w-full py-3 rounded-xl font-bold text-slate-400 shadow-none flex items-center justify-center gap-2 bg-slate-200 border-b-4 border-slate-300 cursor-not-allowed opacity-60";
-
-    // Inventory Slot State
+    
+    // Inventory Slot Visuals
     if (appState.heldBy === 'You') {
-        inventorySlot.className = 'w-full h-20 rounded-xl flex items-center justify-center gap-3 shadow-inner border-2 bg-emerald-50 border-emerald-200';
+        inventorySlot.className = 'w-full h-24 rounded-2xl flex items-center justify-center gap-4 border border-emerald-200 bg-emerald-50/50 shadow-inner';
         inventorySlot.innerHTML = `
-            <div class="bg-emerald-500 text-white p-2 rounded-full shadow-sm animate-pulse">
-                <i class="fa-solid fa-check text-lg"></i>
+            <div class="bg-gradient-to-br from-emerald-400 to-teal-500 text-white p-3 rounded-full shadow-lg shadow-emerald-500/20">
+                <i class="fa-solid fa-check text-xl"></i>
             </div>
-            <div class="text-emerald-800">
-                <div class="font-bold text-xs uppercase">In Hand</div>
-                <div class="text-[10px]">Click any bench to place</div>
+            <div>
+                <div class="text-emerald-800 font-bold text-sm uppercase tracking-wide">Secure</div>
+                <div class="text-[10px] text-emerald-600 font-medium bg-emerald-100 px-2 py-0.5 rounded-full inline-block mt-1">Ready to Place</div>
             </div>
         `;
     } else if (appState.heldBy === 'Anonymous') {
-        inventorySlot.className = 'w-full h-20 rounded-xl flex items-center justify-center gap-3 shadow-inner border-2 bg-red-50 border-red-200 opacity-70';
+        inventorySlot.className = 'w-full h-24 rounded-2xl flex items-center justify-center gap-4 border border-rose-200 bg-rose-50/50 shadow-inner';
         inventorySlot.innerHTML = `
-            <div class="bg-red-400 text-white p-2 rounded-full">
-                <i class="fa-solid fa-lock text-lg"></i>
+            <div class="bg-gradient-to-br from-rose-500 to-red-600 text-white p-3 rounded-full shadow-lg shadow-rose-500/20">
+                <i class="fa-solid fa-user-secret text-xl"></i>
             </div>
-            <div class="text-red-800">
-                <div class="font-bold text-xs uppercase">Unavailable</div>
-                <div class="text-[10px]">Taken by Anonymous</div>
+            <div>
+                <div class="text-rose-800 font-bold text-sm uppercase tracking-wide">Breach</div>
+                <div class="text-[10px] text-rose-600 font-medium">Wait for Return</div>
             </div>
         `;
     } else {
-        // Diary is on a bench
         const benchNum = appState.diaryLocation;
-        inventorySlot.className = 'w-full h-20 rounded-xl flex items-center justify-center gap-3 shadow-inner border-2 bg-slate-100 border-slate-200';
+        inventorySlot.className = 'w-full h-24 rounded-2xl flex items-center justify-center gap-4 border border-slate-200 bg-white/50 shadow-inner';
         inventorySlot.innerHTML = `
-            <div class="bg-slate-300 text-slate-500 p-2 rounded-full">
-                <i class="fa-regular fa-hand text-lg"></i>
+            <div class="bg-slate-200 text-slate-400 p-3 rounded-full">
+                <i class="fa-regular fa-hand text-xl"></i>
             </div>
-            <div class="text-slate-500">
-                <div class="font-bold text-xs uppercase">Empty</div>
-                <div class="text-[10px]">Diary at Bench #${benchNum}</div>
+            <div class="flex flex-col">
+                <div class="text-slate-500 font-bold text-sm uppercase tracking-wide">Empty</div>
+                <div class="text-[10px] text-slate-400 font-medium">
+                    Target: <span class="font-bold text-indigo-500">Bench #${benchNum}</span>
+                </div>
             </div>
         `;
     }
@@ -225,9 +191,9 @@ function renderInventory() {
 function renderHistory() {
     if (appState.history.length === 0) {
         historyLog.innerHTML = `
-            <div class="flex flex-col items-center justify-center h-40 text-slate-400">
-                <i class="fa-regular fa-clock text-3xl mb-2 opacity-30"></i>
-                <span class="text-xs font-bold uppercase tracking-widest opacity-50">No Activity</span>
+            <div class="flex flex-col items-center justify-center h-full text-slate-400/50">
+                <i class="fa-solid fa-wave-square text-3xl mb-2"></i>
+                <span class="text-[10px] font-bold uppercase tracking-widest">System Idle</span>
             </div>`;
         return;
     }
@@ -236,30 +202,34 @@ function renderHistory() {
     [...appState.history].reverse().forEach((log, idx) => {
         const item = document.createElement('div');
         
-        let colorClass = 'border-l-4 border-slate-400 bg-white';
-        let icon = 'fa-info-circle';
+        let accent = 'bg-slate-500';
+        let icon = 'fa-info';
+        let bg = 'bg-white';
         
         if (log.action === 'placed') {
-            colorClass = 'border-l-4 border-emerald-500 bg-emerald-50/50';
+            accent = 'bg-emerald-500';
             icon = 'fa-arrow-down';
+            bg = 'bg-emerald-50/50 border-emerald-100';
         } else if (log.action === 'taken') {
-            colorClass = 'border-l-4 border-indigo-500 bg-indigo-50/50';
+            accent = 'bg-indigo-500';
             icon = 'fa-arrow-up';
+            bg = 'bg-indigo-50/50 border-indigo-100';
         }
 
-        const isUser = log.source === 'You';
-        const badgeColor = isUser ? 'bg-indigo-100 text-indigo-700' : 'bg-orange-100 text-orange-700';
-
-        item.className = `log-entry p-2.5 rounded shadow-sm text-sm border border-slate-100 ${colorClass}`;
+        item.className = `log-entry p-3 rounded-xl border shadow-sm text-sm ${bg} relative overflow-hidden group`;
         item.style.animationDelay = `${idx * 0.05}s`;
 
         item.innerHTML = `
-            <div class="flex justify-between items-center mb-1">
-                <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded ${badgeColor}">${log.source}</span>
-                <span class="text-[9px] font-mono text-slate-400">${log.time}</span>
+            <div class="absolute left-0 top-0 bottom-0 w-1 ${accent}"></div>
+            <div class="flex justify-between items-start mb-1 pl-2">
+                <span class="text-[9px] font-black uppercase tracking-wider text-slate-400">${log.time}</span>
+                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white border border-slate-100 shadow-sm text-slate-600">${log.source}</span>
             </div>
-            <div class="text-slate-700 font-medium pl-1 flex items-center gap-2 text-xs">
-                <i class="fa-solid ${icon} text-[10px] opacity-50"></i> ${log.details}
+            <div class="pl-2 flex items-center gap-2 text-xs font-medium text-slate-700">
+                <div class="w-4 h-4 rounded-full ${accent} text-white flex items-center justify-center text-[8px]">
+                    <i class="fa-solid ${icon}"></i>
+                </div>
+                ${log.details}
             </div>
         `;
         historyLog.appendChild(item);
@@ -270,60 +240,47 @@ function renderHistory() {
  * Interactions
  */
 function handleBenchClick(benchId, event, element) {
-    // If locked by Anonymous, ignore
     if (appState.heldBy === 'Anonymous' && appState.lastKnownLocation === benchId) {
         SoundEngine.playAlert();
-        showToast("Locked! Anonymous vacated this spot.", "error");
+        showToast("Access Denied: Sector Locked", "error");
         return;
     }
 
-    // Visual Feedback
-    element.classList.remove('click-confirm');
-    void element.offsetWidth; 
-    element.classList.add('click-confirm');
-
-    // SCENARIO: You hold diary -> Place it
     if (appState.heldBy === 'You') {
         SoundEngine.playSuccess();
         appState.diaryLocation = benchId;
         appState.heldBy = null;
-        addHistory('placed', `Placed on Bench #${benchId}`, 'You');
+        addHistory('placed', `Secured at Bench #${benchId}`, 'You');
         saveAndRender();
-        showToast(`Diary secured on Bench #${benchId}`, "success");
+        showToast(`Diary placed successfully.`, "success");
         return;
     }
 
-    // SCENARIO: Bench has diary, you don't -> Prompt to use Button
     if (appState.diaryLocation === benchId && appState.heldBy === null) {
         SoundEngine.playClick();
-        showToast("Use the 'I HAVE TAKEN' button to claim it.", "info");
-        // Highlight button
+        showToast("Press 'CLAIM DIARY' to retrieve.", "info");
         takeBtn.classList.add('animate-pulse');
-        setTimeout(() => takeBtn.classList.remove('animate-pulse'), 1000);
+        setTimeout(() => takeBtn.classList.remove('animate-pulse'), 800);
         return;
     }
 
-    // SCENARIO: Empty Bench -> Just noise
     SoundEngine.playClick();
     if (appState.diaryLocation) {
-        showToast(`Empty. Diary is at Bench #${appState.diaryLocation}`, "info");
+        showToast(`Sector Empty. Target is at #${appState.diaryLocation}`, "info");
     } else {
-        showToast("Bench is empty.", "info");
+        showToast("Sector Empty.", "info");
     }
 }
 
 function handleTakeButton() {
     if (appState.diaryLocation !== null && appState.heldBy === null) {
         const fromBench = appState.diaryLocation;
-        
         SoundEngine.playTake();
-        
         appState.diaryLocation = null;
         appState.heldBy = 'You';
-        
         addHistory('taken', `Retrieved from Bench #${fromBench}`, 'You');
         saveAndRender();
-        showToast("You have the diary! Click a bench to place.", "success");
+        showToast("Diary Retrieved. Authorization Granted.", "success");
     } else {
         SoundEngine.playAlert();
     }
@@ -333,32 +290,28 @@ function handleSimulateActivity() {
     SoundEngine.playClick(); 
 
     if (appState.heldBy === 'You') {
-        showToast("Simulation skipped: You hold the diary.", "warning");
+        showToast("Simulation Blocked: User Control Active.", "warning");
         return;
     }
 
     if (appState.heldBy === 'Anonymous') {
-        // Anonymous PLACES it
         const randomBench = Math.floor(Math.random() * 16) + 1;
-        
         appState.diaryLocation = randomBench;
         appState.heldBy = null;
-        appState.lastKnownLocation = null; // Unlock the bench
+        appState.lastKnownLocation = null;
         
         SoundEngine.playSuccess();
         addHistory('placed', `Returned to Bench #${randomBench}`, 'Anonymous');
-        showToast("Anonymous returned the diary.", "info");
+        showToast("Signal Detected: Diary Returned.", "info");
     } else if (appState.diaryLocation !== null) {
-        // Anonymous TAKES it
         const fromBench = appState.diaryLocation;
-        
         appState.diaryLocation = null;
         appState.heldBy = 'Anonymous';
-        appState.lastKnownLocation = fromBench; // Lock this bench
+        appState.lastKnownLocation = fromBench;
         
         SoundEngine.playAlert();
-        addHistory('taken', `Stolen from Bench #${fromBench}`, 'Anonymous');
-        showToast("Anonymous took the diary!", "error");
+        addHistory('taken', `Extracted from Bench #${fromBench}`, 'Anonymous');
+        showToast("Security Breach: Diary Taken!", "error");
     }
     
     saveAndRender();
@@ -384,17 +337,15 @@ function saveAndRender() {
 
 function showToast(msg, type = 'info') {
     const toast = document.createElement('div');
-    const config = {
-        success: { color: 'bg-emerald-600', icon: 'fa-check' },
-        error: { color: 'bg-red-600', icon: 'fa-exclamation' },
-        warning: { color: 'bg-orange-500', icon: 'fa-bell' },
-        info: { color: 'bg-slate-700', icon: 'fa-info' }
+    const colors = {
+        success: 'bg-emerald-600/90 border-emerald-400',
+        error: 'bg-rose-600/90 border-rose-400',
+        warning: 'bg-amber-500/90 border-amber-400',
+        info: 'bg-slate-700/90 border-slate-500'
     };
     
-    const style = config[type];
-    
-    toast.className = `toast ${style.color} text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 min-w-[300px] pointer-events-auto z-50`;
-    toast.innerHTML = `<div class="bg-white/20 p-1 rounded-full"><i class="fa-solid ${style.icon}"></i></div><span class="font-bold text-sm">${msg}</span>`;
+    toast.className = `toast ${colors[type]} backdrop-blur-md text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 min-w-[320px] pointer-events-auto border-l-4 font-inter z-50`;
+    toast.innerHTML = `<i class="fa-solid fa-circle-info opacity-80"></i><span class="font-medium text-sm">${msg}</span>`;
     
     document.getElementById('toast-container').appendChild(toast);
     setTimeout(() => {
@@ -429,15 +380,11 @@ function setupEasterEggs() {
     if(laptop) {
         laptop.onclick = () => {
             SoundEngine.playMagic();
-            laptop.classList.add('laptop-hacked');
-            showToast("System Hacked: Admin Access Granted", "warning");
-            setTimeout(() => laptop.classList.remove('laptop-hacked'), 1500);
+            laptop.parentElement.classList.add('laptop-hacked');
+            showToast("System Override: Admin Access Granted", "warning");
+            setTimeout(() => laptop.parentElement.classList.remove('laptop-hacked'), 1500);
         };
     }
-    document.getElementById('windows-group').onclick = () => {
-        SoundEngine.playClick();
-        showToast("It's a beautiful day outside.", "info");
-    };
 }
 
 document.addEventListener('DOMContentLoaded', init);
