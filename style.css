@@ -1,103 +1,133 @@
-/* Base styles */
-body {
-    -webkit-font-smoothing: antialiased;
+/* Fonts */
+.font-exo { font-family: 'Exo 2', sans-serif; }
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Background Grid */
+.grid-bg {
+    background-size: 40px 40px;
+    background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 
-/* Scrollbar Styling */
-::-webkit-scrollbar {
+/* Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
     width: 6px;
-    height: 6px;
 }
-::-webkit-scrollbar-track {
-    background: #1e293b; 
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.2);
 }
-::-webkit-scrollbar-thumb {
-    background: #475569; 
-    border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: #64748b; 
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.5);
+    border-radius: 4px;
 }
 
-/* Bench Styling */
+/* 3D Bench Styling */
 .bench {
-    perspective: 1000px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    transform-style: preserve-3d;
 }
 
-.bench:hover {
+.bench-surface {
+    background: linear-gradient(135deg, #4d352c 0%, #3e2723 100%);
+    box-shadow: 
+        inset 0 1px 0 rgba(255,255,255,0.1),
+        0 4px 6px -1px rgba(0,0,0,0.5),
+        0 2px 0 #281815; /* Fake 3D depth */
+}
+
+.bench:hover .bench-surface {
     transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    box-shadow: 
+        inset 0 1px 0 rgba(255,255,255,0.15),
+        0 10px 15px -3px rgba(0,0,0,0.6),
+        0 4px 0 #281815;
+    border-color: rgba(255,255,255,0.2);
 }
 
-.bench:active {
-    transform: translateY(1px);
+.bench:active .bench-surface {
+    transform: translateY(2px);
+    box-shadow: 0 0 0 #281815;
 }
 
-.wood-texture {
-    background-color: #5D4037;
-    background-image: repeating-linear-gradient(
-        45deg,
-        rgba(255, 255, 255, 0.05) 0px,
-        rgba(255, 255, 255, 0.05) 2px,
-        transparent 2px,
-        transparent 4px
-    );
+/* Interaction Ripple Effect */
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+    background-color: rgba(255, 255, 255, 0.3);
+    pointer-events: none;
 }
 
-/* Diary Icon Animation */
-@keyframes popIn {
-    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
-    80% { transform: scale(1.2) rotate(10deg); opacity: 1; }
-    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+@keyframes ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
 }
 
-.diary-icon {
-    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+/* Diary Glow Pulse */
+@keyframes diaryPulse {
+    0% { filter: drop-shadow(0 0 2px rgba(52, 211, 153, 0.5)); }
+    50% { filter: drop-shadow(0 0 10px rgba(52, 211, 153, 0.9)); }
+    100% { filter: drop-shadow(0 0 2px rgba(52, 211, 153, 0.5)); }
 }
 
-/* Toast Notification Animation */
-@keyframes slideInRight {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+.diary-glow {
+    animation: diaryPulse 2s infinite ease-in-out;
 }
 
-@keyframes fadeOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
+/* Windows Light Shafts */
+.window-glow {
+    width: 60px;
+    height: 120px;
+    background: linear-gradient(90deg, rgba(251, 191, 36, 0.1), transparent);
+    transform: skewY(-20deg);
+    filter: blur(8px);
+    border-left: 2px solid rgba(251, 191, 36, 0.3);
+}
+
+/* History Animations */
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.log-entry-enter {
+    animation: slideInLeft 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Analog Clock Hands */
+.clock-face .hand {
+    transform-origin: bottom center;
+    transition: transform 0.05s cubic-bezier(0.4, 2.08, 0.55, 0.44); /* Elastic tick */
+    box-shadow: 0 0 4px rgba(0,0,0,0.5);
+}
+
+/* Toast Animations */
+@keyframes toastIn {
+    0% { transform: translateY(20px) scale(0.9); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 .toast {
-    animation: slideInRight 0.3s ease-out forwards;
+    animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .toast.hiding {
-    animation: fadeOut 0.3s ease-out forwards;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateX(100%);
 }
 
-/* Animation for History Items */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+/* Noise overlay for texture */
+.bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='1'/%3E%3C/svg%3E");
 }
 
-.animate-fade-in {
-    animation: fadeIn 0.3s ease-out forwards;
-}
-
-/* Dashed line for walkway */
-.dashed-line {
-    background: linear-gradient(to bottom, #334155 50%, transparent 50%);
-    background-size: 1px 20px;
-}
-
-/* Status Indicator Pulse */
-@keyframes pulse-green {
-    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-.status-active {
-    animation: pulse-green 2s infinite;
+/* Bench Label */
+.bench-label {
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
 }
