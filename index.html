@@ -22,7 +22,7 @@
                 <i class="fa-solid fa-book-journal-whills text-2xl text-cyan-400"></i>
             </div>
             <div>
-                <h1 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 tracking-wide uppercase">Diary Hunter <span class="text-[10px] bg-slate-800 px-1 py-0.5 rounded text-slate-400 ml-1">v2.0</span></h1>
+                <h1 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 tracking-wide uppercase">Diary Hunter <span class="text-[10px] bg-slate-800 px-1 py-0.5 rounded text-slate-400 ml-1">v2.1</span></h1>
                 <p class="text-xs text-slate-400 font-mono" id="status-indicator">System Status: <span class="text-emerald-400">Online</span></p>
             </div>
         </div>
@@ -50,28 +50,32 @@
             <!-- Room Container -->
             <div class="room-container w-full max-w-5xl aspect-video bg-slate-900/60 backdrop-blur-sm rounded-2xl border border-white/10 p-8 relative shadow-2xl overflow-hidden flex flex-col">
                 
-                <!-- Windows (Right Wall) -->
-                <div class="absolute right-0 top-1/4 bottom-1/4 w-2 flex flex-col justify-between items-end gap-4 pointer-events-none z-0">
-                    <div class="window-glow"></div>
-                    <div class="window-glow"></div>
-                    <div class="window-glow"></div>
+                <!-- Windows (Right Wall) (Easter Egg ID Added) -->
+                <div id="windows-group" class="absolute right-0 top-1/4 bottom-1/4 w-2 flex flex-col justify-between items-end gap-4 z-0 cursor-pointer group">
+                    <div class="window-glow transition-opacity duration-500"></div>
+                    <div class="window-glow transition-opacity duration-500"></div>
+                    <div class="window-glow transition-opacity duration-500"></div>
                 </div>
 
                 <!-- Top Wall: Door, Clock, Teacher -->
                 <div class="flex justify-between items-start mb-8 relative z-10 w-full h-32">
                     
-                    <!-- Door -->
+                    <!-- Door (Updated Label) -->
                     <div class="door-area relative group perspective-1000">
                         <div class="w-2 h-32 bg-slate-800 absolute -left-4 top-0 border-r border-slate-600"></div>
-                        <div class="door w-20 h-32 bg-gradient-to-br from-slate-700 to-slate-800 rounded-sm border border-slate-600 shadow-xl transform origin-left transition-all duration-700 group-hover:rotate-y-45 flex items-center justify-center relative cursor-pointer overflow-hidden">
+                        <div class="door w-24 h-32 bg-gradient-to-br from-slate-700 to-slate-800 rounded-sm border border-slate-600 shadow-xl transform origin-left transition-all duration-700 group-hover:rotate-y-45 flex items-center justify-center relative cursor-pointer overflow-hidden">
                             <div class="absolute inset-0 bg-noise opacity-10"></div>
                             <div class="w-2 h-8 bg-slate-900/50 rounded-full absolute right-2 top-1/2 -translate-y-1/2 border border-slate-500/30"></div>
-                            <span class="absolute top-4 text-[8px] font-bold text-slate-500/50 uppercase tracking-widest border border-slate-500/20 px-1 rounded">Class 1-A</span>
+                            <!-- Class Label Updated -->
+                            <div class="absolute top-4 border border-slate-500/20 px-2 py-1 rounded bg-black/20 text-center">
+                                <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Class</span>
+                                <span class="block text-xs font-bold text-cyan-500 uppercase tracking-widest">XI Science</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Analog Clock -->
-                    <div class="absolute left-1/2 -translate-x-1/2 top-0 flex flex-col items-center">
+                    <!-- Analog Clock (Easter Egg ID Added) -->
+                    <div id="analog-clock-container" class="absolute left-1/2 -translate-x-1/2 top-0 flex flex-col items-center cursor-pointer transition-transform duration-700 active:rotate-[360deg]">
                         <div class="analog-clock w-24 h-24 bg-slate-800 rounded-full border-4 border-slate-700 shadow-lg relative flex items-center justify-center">
                             <div class="clock-face w-full h-full relative">
                                 <div class="hand hour-hand absolute bg-white w-1 h-6 top-6 left-1/2 -translate-x-1/2 origin-bottom rounded-full"></div>
@@ -99,17 +103,17 @@
                             </div>
                             
                             <!-- Items -->
-                            <div class="absolute top-4 right-6 w-8 h-10 bg-white/5 rounded border border-white/10 flex items-center justify-center transform rotate-12 shadow-sm">
-                                <div class="w-6 h-8 bg-white/80 scale-90"></div> <!-- Paper -->
+                            <div class="absolute top-4 right-6 w-8 h-10 bg-white/5 rounded border border-white/10 flex items-center justify-center transform rotate-12 shadow-sm hover:rotate-45 transition-transform cursor-help" title="Grade Book">
+                                <div class="w-6 h-8 bg-white/80 scale-90"></div> 
                             </div>
                             <div class="absolute top-8 left-8 w-10 h-10 bg-slate-800 rounded-full border border-slate-700 flex items-center justify-center shadow-md">
                                 <i class="fa-solid fa-mug-hot text-slate-500 text-sm"></i>
                             </div>
-                            <!-- Laptop Open -->
-                            <div class="absolute bottom-4 w-24 h-16 bg-slate-700 rounded-md transform -translate-x-4 skew-x-6 border-b-2 border-black flex items-center justify-center">
-                                <div class="w-20 h-12 bg-black rounded-sm relative overflow-hidden">
-                                    <div class="w-full h-full bg-cyan-500/20 animate-pulse"></div>
-                                    <i class="fa-brands fa-apple text-white/50 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg"></i>
+                            <!-- Laptop Open (Easter Egg ID) -->
+                            <div id="teacher-laptop" class="absolute bottom-4 w-24 h-16 bg-slate-700 rounded-md transform -translate-x-4 skew-x-6 border-b-2 border-black flex items-center justify-center cursor-alias">
+                                <div class="w-20 h-12 bg-black rounded-sm relative overflow-hidden group-laptop">
+                                    <div class="w-full h-full bg-cyan-500/20 animate-pulse laptop-screen"></div>
+                                    <i class="fa-brands fa-apple text-white/50 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg hover:text-white transition-colors"></i>
                                 </div>
                             </div>
                         </div>
@@ -155,11 +159,11 @@
                 <!-- JS Generated -->
             </div>
 
-            <!-- Held Item Status -->
+            <!-- Held Item Status / ACTION BUTTON AREA -->
             <div class="p-4 border-t border-white/10 bg-slate-800/50">
-                <div class="text-[10px] text-slate-500 uppercase tracking-widest mb-2">Inventory</div>
-                <div id="inventory-slot" class="w-full h-16 bg-slate-950 rounded-lg border border-slate-700 flex items-center justify-center gap-3 transition-colors">
-                    <!-- JS Updates this -->
+                <div class="text-[10px] text-slate-500 uppercase tracking-widest mb-2">Current Status</div>
+                <div id="inventory-slot" class="w-full h-20 bg-slate-950 rounded-lg border border-slate-700 flex items-center justify-center gap-3 transition-all duration-300">
+                    <!-- JS Updates this to act as a button/status -->
                     <span class="text-slate-600 italic text-sm">Empty</span>
                 </div>
             </div>

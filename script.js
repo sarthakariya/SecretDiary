@@ -1,9 +1,9 @@
 /**
- * Secret Diary Classroom - Core Logic v2.0
- * Features: Singleton Diary, History Tracking, Simulation, Time Sync
+ * Secret Diary Classroom - Core Logic v2.1
+ * Features: Singleton Diary, History Tracking, Simulation, Time Sync, Strict Locking, Easter Eggs
  */
 
-const STORAGE_KEY = 'classroom_diary_state_v3';
+const STORAGE_KEY = 'classroom_diary_state_v4';
 
 // Singleton State Structure
 const initialState = {
@@ -11,8 +11,6 @@ const initialState = {
     diaryLocation: null, 
     // 'You' | 'Anonymous' | null (if on bench)
     heldBy: 'You', 
-    // Timestamp of last take to enforce "One take per day" soft limit (optional, visual only)
-    lastTakeTime: null,
     history: []
 };
 
@@ -37,12 +35,6 @@ const hourHand = document.querySelector('.hour-hand');
 const minuteHand = document.querySelector('.minute-hand');
 const secondHand = document.querySelector('.second-hand');
 
-// Sound Effects (Simulated via simple objects, in real app use Audio)
-const Sounds = {
-    place: () => {}, // Placeholder
-    take: () => {},  // Placeholder
-};
-
 /**
  * Initialization
  */
@@ -50,6 +42,7 @@ function init() {
     renderClassroom();
     renderHistory();
     renderInventory();
+    setupEasterEggs();
     
     // Start Clock Tick
     updateClock();
@@ -57,6 +50,41 @@ function init() {
 
     // Bind Simulation
     simulateBtn.onclick = handleSimulateActivity;
+}
+
+/**
+ * Easter Egg Logic
+ */
+function setupEasterEggs() {
+    // 1. Clock Spin
+    const clock = document.getElementById('analog-clock-container');
+    if(clock) {
+        clock.onclick = () => {
+            clock.classList.toggle('rotate-[360deg]'); // Trigger Tailwind transition
+            showToast("Time is relative in Class XI Science...", "warning");
+        };
+    }
+
+    // 2. Teacher Laptop Hack
+    const laptop = document.getElementById('teacher-laptop');
+    if(laptop) {
+        laptop.onclick = () => {
+            laptop.classList.add('laptop-hacked');
+            showToast("ACCESS DENIED: Principal Alerted!", "error");
+            setTimeout(() => {
+                laptop.classList.remove('laptop-hacked');
+            }, 2000);
+        };
+    }
+
+    // 3. Weather Toggle
+    const windows = document.getElementById('windows-group');
+    if(windows) {
+        windows.onclick = () => {
+            document.body.classList.toggle('bg-slate-900'); // Darken BG
+            showToast("Atmospheric sensors adjusted.", "info");
+        };
+    }
 }
 
 /**
@@ -73,7 +101,13 @@ function renderClassroom() {
         const hasDiary = appState.diaryLocation === i;
 
         const benchEl = document.createElement('div');
-        benchEl.className = 'bench w-24 h-16 md:w-32 md:h-20 relative cursor-pointer group';
+        
+        // Locking Visuals: If Anonymous has it, benches look 'disabled' because you can't find it
+        // If 'You' have it, benches are active targets.
+        const isLocked = appState.heldBy === 'Anonymous';
+        const lockClass = isLocked ? 'locked-bench' : '';
+
+        benchEl.className = `bench w-24 h-16 md:w-32 md:h-20 relative cursor-pointer group ${lockClass}`;
         benchEl.onclick = (e) => handleBenchClick(i, e);
 
         // Visual State Classes
@@ -100,32 +134,37 @@ function renderClassroom() {
 }
 
 function renderInventory() {
-    // Show what the user is holding
+    // Make Inventory look like an Action Button
     if (appState.heldBy === 'You') {
-        inventorySlot.className = 'w-full h-16 bg-emerald-900/20 rounded-lg border border-emerald-500/50 flex items-center justify-center gap-3 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)]';
+        inventorySlot.className = 'w-full h-24 bg-emerald-600 rounded-lg border-2 border-emerald-400 flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(16,185,129,0.4)] cursor-pointer animate-pulse';
+        inventorySlot.onclick = () => showToast("Select a bench in the classroom to hide the diary!", "success");
         inventorySlot.innerHTML = `
-            <i class="fa-solid fa-book-journal-whills text-emerald-400 text-2xl animate-pulse"></i>
-            <div>
-                <div class="text-emerald-400 font-bold text-sm uppercase">Secret Diary</div>
-                <div class="text-[10px] text-emerald-600">Click a bench to hide it</div>
+            <div class="bg-white/20 p-3 rounded-full">
+                <i class="fa-solid fa-check text-white text-2xl"></i>
+            </div>
+            <div class="text-left">
+                <div class="text-white font-bold text-sm uppercase tracking-wider">DIARY SECURED</div>
+                <div class="text-[10px] text-emerald-100 font-bold bg-black/20 px-2 py-1 rounded inline-block mt-1">CLICK BENCH TO PLACE</div>
             </div>
         `;
     } else if (appState.heldBy === 'Anonymous') {
-        inventorySlot.className = 'w-full h-16 bg-slate-900 rounded-lg border border-rose-500/30 flex items-center justify-center gap-3 opacity-50 grayscale';
+        inventorySlot.className = 'w-full h-20 bg-slate-900 rounded-lg border border-rose-500/30 flex items-center justify-center gap-3 opacity-70 grayscale cursor-not-allowed';
+        inventorySlot.onclick = null;
         inventorySlot.innerHTML = `
             <i class="fa-solid fa-user-secret text-rose-400 text-xl"></i>
             <div>
-                <div class="text-rose-400 font-bold text-xs uppercase">Taken by Someone</div>
-                <div class="text-[10px] text-rose-600">Wait for them to return it</div>
+                <div class="text-rose-400 font-bold text-xs uppercase">Missing</div>
+                <div class="text-[10px] text-rose-600">Taken by someone...</div>
             </div>
         `;
     } else {
         // Diary is on a bench
         const benchNum = appState.diaryLocation;
-        inventorySlot.className = 'w-full h-16 bg-slate-950 rounded-lg border border-slate-700 flex items-center justify-center gap-3';
+        inventorySlot.className = 'w-full h-20 bg-slate-950 rounded-lg border border-slate-700 flex items-center justify-center gap-3';
+        inventorySlot.onclick = null;
         inventorySlot.innerHTML = `
-            <span class="text-slate-600 italic text-sm">You are empty handed</span>
-            <div class="text-[10px] text-slate-700">Find the diary on Bench #${benchNum}</div>
+            <span class="text-slate-600 italic text-sm">Hands Empty</span>
+            <div class="text-[10px] text-slate-700 border border-slate-800 px-2 rounded">Target: Bench #${benchNum}</div>
         `;
     }
 }
@@ -147,16 +186,13 @@ function renderHistory() {
         
         // Dynamic Styling based on Action
         let accentColor = 'border-slate-600';
-        let icon = 'fa-circle-info';
         let bg = 'bg-slate-800/40';
         
         if (log.action === 'placed') {
             accentColor = 'border-emerald-500';
-            icon = 'fa-file-arrow-down';
             bg = 'bg-emerald-900/10';
         } else if (log.action === 'taken') {
             accentColor = 'border-rose-500';
-            icon = 'fa-hand-holding-hand';
             bg = 'bg-rose-900/10';
         }
 
@@ -165,7 +201,6 @@ function renderHistory() {
         const sourceLabel = isUser ? 'YOU' : 'ANON';
 
         logItem.className = `log-entry-enter relative p-3 rounded border-l-2 ${accentColor} ${bg} hover:bg-white/5 transition-colors`;
-        // Stagger animation
         logItem.style.animationDelay = `${idx * 50}ms`;
 
         logItem.innerHTML = `
@@ -195,7 +230,13 @@ function handleBenchClick(benchId, event) {
     let message = '';
     let type = 'info';
 
-    // SCENARIO 1: You have the diary, place it on empty bench
+    // STRICT LOCK: If Anonymous has it, you can't do anything with benches.
+    if (appState.heldBy === 'Anonymous') {
+        showToast('Someone else has the diary. You must wait.', 'error');
+        return;
+    }
+
+    // SCENARIO 1: You have the diary -> Place it
     if (appState.heldBy === 'You') {
         if (appState.diaryLocation === null) {
             // Place it
@@ -205,18 +246,14 @@ function handleBenchClick(benchId, event) {
             action = 'placed';
             message = `Diary hidden securely on Bench #${benchId}`;
             type = 'success';
-        } else {
-            // Should not happen if logic is correct (heldBy null if location set)
-            // But if we allow moving it directly... let's stick to simple "Place" logic
-        }
+        } 
     } 
-    // SCENARIO 2: Diary is on THIS bench, take it
+    // SCENARIO 2: Diary is on THIS bench -> Take it
     else if (appState.diaryLocation === benchId) {
         if (appState.heldBy === null) {
             // Take it
             appState.diaryLocation = null;
             appState.heldBy = 'You';
-            appState.lastTakeTime = timestamp;
 
             action = 'taken';
             message = `You retrieved the diary from Bench #${benchId}`;
@@ -225,15 +262,10 @@ function handleBenchClick(benchId, event) {
     }
     // SCENARIO 3: Diary is on ANOTHER bench
     else if (appState.diaryLocation !== null && appState.diaryLocation !== benchId) {
-        showToast(`Empty. The diary is at Bench #${appState.diaryLocation}`, 'error');
+        showToast(`This bench is empty. Check Bench #${appState.diaryLocation}`, 'info');
         return; 
     }
-    // SCENARIO 4: Someone else has it
-    else if (appState.heldBy === 'Anonymous') {
-        showToast('Someone else has the diary. You must wait.', 'warning');
-        return;
-    }
-    // SCENARIO 5: Empty bench, no one has it (Should not happen in singleton logic unless bug)
+    // SCENARIO 4: Bench is empty and you don't have it
     else {
         showToast('This bench is empty.', 'info');
         return;
@@ -249,13 +281,9 @@ function handleBenchClick(benchId, event) {
 }
 
 function handleSimulateActivity() {
-    // Simulation Rules:
-    // 1. If 'You' hold it, Anonymous cannot take it (Too frustrating for user).
-    // 2. If it's on a bench, Anonymous can take it.
-    // 3. If Anonymous holds it, they place it on a random bench.
-
+    // STRICT LOCK: Simulation cannot take diary if User holds it
     if (appState.heldBy === 'You') {
-        showToast("You are holding the diary. Keep it safe!", 'info');
+        showToast("Simulation Blocked: You are holding the diary.", 'info');
         return;
     }
 
