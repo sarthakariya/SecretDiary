@@ -1,0 +1,5 @@
+{
+  "name": "Secret Diary Classroom",
+  "description": "A 2D simulation of a classroom where users can secretly place and retrieve diaries from benches.",
+  "requestFramePermissions": []
+}
